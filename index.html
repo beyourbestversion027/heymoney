@@ -700,7 +700,7 @@ async function restoreBinItem(index){const bin=loadBin();const entry=bin[index];
 function permanentDeleteBinItem(index){const bin=loadBin();const entry=bin[index];let name;if(entry.type==='trip')name=entry.item.name;else if(entry.type==='expense')name=entry.item.description;else if(entry.type==='account')name=accountLabel(entry.item);else name=categoryDisplay(entry.item).name;if(!confirm(`Permanently delete "${name}"? This cannot be undone.`))return;bin.splice(index,1);saveBin(bin);renderBinList();toast('Permanently deleted.')}
 function emptyBin(){if(!confirm('Permanently delete everything in the Recycle Bin?'))return;saveBin([]);renderBinList();toast('Recycle Bin emptied.')}
 
-initSplash();loadAppData();document.getElementById('new-member-name').addEventListener('keydown',e=>{if(e.key==='Enter')addMember()});
+/* Boot is intentionally deferred until every HeyMoney extension is defined. */
 if('serviceWorker' in navigator && location.protocol!=='file:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('service-worker.js').catch(()=>{})})}
 
   // ── Export / Import ────────────────────────────────────────────────
@@ -1037,6 +1037,33 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){window.addEventL
   const oldOpenExpense=window.openExpenseModal; if(oldOpenExpense)window.openExpenseModal=function(id){oldOpenExpense(id);setTimeout(()=>{const trip=currentTrip();if(trip&&trip.members&&trip.members.length){document.querySelectorAll('#split-participants input[type=checkbox]').forEach(x=>x.disabled=false)}},0)};
   // Add a Money Hub entry to the existing More list.
   const moreList=document.querySelector('#page-more .more-list');if(moreList&&!document.getElementById('more-moneyhub-row')){const d=document.createElement('div');d.id='more-moneyhub-row';d.className='more-list-row';d.innerHTML='💰 Money Hub <span>›</span>';d.onclick=showMoneyHub;moreList.insertBefore(d,moreList.firstChild)}
+})();
+
+/* ===== Safe offline boot =====
+   All feature extensions above must be installed before loadAppData() calls
+   initialRender(). This prevents the command-center overrides from racing
+   the original app boot sequence. */
+(function bootHeyMoney(){
+  const start=()=>{
+    try{
+      const home=document.getElementById('page-home');
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      if(home) home.classList.add('active');
+      setBottomNav('home');
+      initSplash();
+      loadAppData();
+      const member=document.getElementById('new-member-name');
+      if(member) member.addEventListener('keydown',e=>{if(e.key==='Enter')addMember()});
+    }catch(err){
+      console.error('HeyMoney boot error',err);
+      /* Keep the shell usable even if optional analytics/backup code fails. */
+      const home=document.getElementById('page-home');
+      if(home){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));home.classList.add('active');}
+      try{renderHome();}catch(e){}
+    }
+  };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
 })();
 </script>
 </body>
