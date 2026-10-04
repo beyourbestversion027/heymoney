@@ -267,6 +267,7 @@ main#main{padding-bottom:88px}
     <div class="more-list">
       <div class="more-list-row" onclick="openSettingsModal()">⚙️ Settings <span>›</span></div>
       <div class="more-list-row" onclick="openBinModal()">🗑️ Recycle Bin <span>›</span></div>
+      <div class="more-list-row" onclick="shareOrDownloadBackup()">📤 Share Backup (sync to another device) <span>›</span></div>
       <div class="more-list-row" onclick="exportAllData();markBackupDone();showMorePage()">⬇️ Backup / Export Data (JSON) <span>›</span></div>
       <div class="more-list-row" onclick="exportExcelData();markBackupDone();showMorePage()">📊 Export as Excel <span>›</span></div>
       <div class="more-list-row" onclick="document.getElementById('import-file-input').click()">⬆️ Restore / Import Data (.json/.xlsx) <span>›</span></div>
@@ -403,6 +404,7 @@ main#main{padding-bottom:88px}
 <hr class="divider">
 <div style="font-size:var(--text-xs);font-weight:700;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:var(--space-3)">Data</div>
 <div class="setting-row"><div><div style="font-weight:600;font-size:var(--text-sm)">Recycle Bin</div><div class="form-hint">Deleted trips &amp; expenses are kept for 30 days.</div></div><button class="btn btn-ghost btn-sm" onclick="closeModal('modal-settings');openBinModal()">Open Bin</button></div>
+<div class="setting-row"><div><div style="font-weight:600;font-size:var(--text-sm)">Sync Across Devices (Manual)</div><div class="form-hint">HeyMoney doesn't sync automatically — your phone and laptop each keep their own data. To move data from one to the other: tap <strong>Share Backup</strong> on the device with your latest data, send it to yourself (WhatsApp, email, Drive — whatever's easiest), then open that file on the other device and use <strong>Import</strong>. Importing replaces that device's data entirely, so always export/share from whichever device has your newest entries.</div><button class="btn btn-primary btn-sm" onclick="shareOrDownloadBackup()" style="margin-top:var(--space-2)">📤 Share Backup</button></div></div>
 <div class="setting-row"><div><div style="font-weight:600;font-size:var(--text-sm)">Backup &amp; Restore</div><div class="form-hint">JSON keeps everything (incl. Split trips) with full fidelity. Excel is handy for spreadsheets — it covers accounts, transactions, categories, tags, budgets, and subscriptions (not Split trips). Stays 100% local either way.</div></div><div style="display:flex;gap:var(--space-2);flex-wrap:wrap"><button class="btn btn-ghost btn-sm" onclick="exportAllData()">&#11015; Export JSON</button><button class="btn btn-ghost btn-sm" onclick="exportExcelData()">&#11015; Export Excel</button><button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-file-input').click()">&#11014; Import (.json/.xlsx)</button><input type="file" id="import-file-input" accept=".json,.xlsx,.xls" style="display:none" onchange="importAllData(event)"></div></div><div class="setting-row"><div><div style="font-weight:600;font-size:var(--text-sm)">Auto-Backup</div><div class="form-hint">Automatically downloads a JSON backup to your device when you open the app, if it's overdue. This can't run in the background on a schedule — it only checks when you actually open HeyMoney. For real protection, occasionally move these downloaded files off this device (Drive, email to yourself, etc.) — clearing your browser/app data wipes everything stored here.</div><label class="tag-chip" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;margin-top:var(--space-2)"><input type="checkbox" id="autobackup-enabled-toggle" onchange="saveAutoBackupSettingsUI()">Enable auto-backup</label><div style="margin-top:var(--space-2)"><select class="form-select" id="autobackup-freq-select" onchange="saveAutoBackupSettingsUI()" style="width:auto;display:inline-block"><option value="1">Every day</option><option value="3">Every 3 days</option><option value="7">Every week</option></select></div></div></div>
 <div class="setting-row"><div><div style="font-weight:600;font-size:var(--text-sm);color:var(--color-error)">Erase all local data</div><div class="form-hint">Deletes all trips, PIN settings, and logo stored in this browser. Cannot be undone.</div></div><button class="btn btn-danger btn-sm" onclick="clearAllLocalData()">Erase All</button></div>
 </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-settings')">Close</button><button class="btn btn-primary" onclick="savePrivacySettings()">Save Settings</button></div></div></div>
@@ -699,6 +701,38 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){window.addEventL
     a.click();
     URL.revokeObjectURL(url);
     toast('Backup downloaded! (JSON has full fidelity, including Split trips)', 'success');
+  }
+
+  async function shareOrDownloadBackup() {
+    const snapshot = {};
+    Object.values(STORAGE_KEYS).forEach(k => {
+      const v = localStorage.getItem(k);
+      if (v !== null) snapshot[k] = v;
+    });
+    if (!Object.keys(snapshot).length) return toast('Nothing to export yet.', 'error');
+    const filename = 'heymoney-backup-' + new Date().toISOString().split('T')[0] + '.json';
+    const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+    if (navigator.share && navigator.canShare) {
+      try {
+        const file = new File([blob], filename, { type: 'application/json' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: 'HeyMoney Backup', text: 'My HeyMoney data backup — import this on your other device.' });
+          markBackupDone();
+          toast('Backup shared!', 'success');
+          return;
+        }
+      } catch (err) {
+        if (err && err.name === 'AbortError') return;
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    markBackupDone();
+    toast('Backup downloaded! Share it from your Downloads/Files app to sync to another device.', 'success');
   }
 
   function exportExcelData() {
