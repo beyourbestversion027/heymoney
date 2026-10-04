@@ -1,4 +1,4 @@
-const CACHE_NAME = 'heymoney-cache-v2';
+const CACHE_NAME = 'heymoney-cache-v3';
 const APP_SHELL = [
   './index.html',
   './manifest.json',
@@ -23,10 +23,6 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Cache-first for the app shell, so the app opens instantly offline.
-// Everything the app does after that (all your data) lives in localStorage,
-// which persists offline automatically — no network calls needed except
-// for the optional voice-input feature.
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   event.respondWith(
