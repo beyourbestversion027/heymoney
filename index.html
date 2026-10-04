@@ -1069,123 +1069,61 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){window.addEventL
   else start();
 })();
 </script>
-<style>
-.hm-io-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
-.hm-copy-btn,.hm-action-btn{min-height:44px!important;padding:9px 14px!important;border:1px solid var(--color-border)!important;border-radius:12px!important;background:var(--color-surface)!important;color:var(--color-text)!important;font-size:13px!important;font-weight:700!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;box-shadow:var(--shadow-sm)!important}
-.hm-copy-btn.primary{background:var(--color-primary)!important;border-color:var(--color-primary)!important;color:#fff!important}
-.hm-copy-btn:hover,.hm-action-btn:hover{background:var(--color-surface-offset)!important}
-.hm-io-group{border:1px solid var(--color-border);border-radius:14px;background:var(--color-surface);overflow:hidden;margin-bottom:10px}
-.hm-io-group-head{display:flex;align-items:center;gap:10px;padding:13px;background:var(--color-surface-offset)}
-.hm-io-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--color-primary-light);color:var(--color-primary);font-weight:800;flex-shrink:0}
-.hm-io-person{flex:1;min-width:0}.hm-io-person strong{display:block;font-size:15px}.hm-io-person small{display:block;color:var(--color-text-muted);font-size:11px;margin-top:2px}
-.hm-io-total{text-align:right}.hm-io-total strong{display:block;font-family:var(--font-display);font-size:18px}
-.hm-io-items{padding:0 13px 7px}.hm-io-item{display:flex;align-items:center;gap:9px;padding:10px 0;border-top:1px solid var(--color-divider);font-size:12px}
-.hm-io-note{flex:1;min-width:0}.hm-io-note strong{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hm-io-note small{color:var(--color-text-muted)}
-.hm-io-actions{display:flex;gap:7px;flex-wrap:wrap;padding:0 13px 13px}.hm-io-empty{padding:16px;border:1px dashed var(--color-border);border-radius:12px;color:var(--color-text-muted);font-size:12px}.hm-copy-note{font-size:11px;color:var(--color-text-muted);margin-top:7px}
-@media(max-width:700px){.hm-io-toolbar .hm-copy-btn{flex:1}.hm-io-item{align-items:flex-start}.hm-action-btn{min-width:44px;padding-left:10px!important;padding-right:10px!important}}
+<style id="hm-people-v2-css">
+.hm-people-v2{grid-column:1/-1!important}
+.hm-people-v2 .hm-p-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.hm-people-v2 .hm-p-actions{display:flex;gap:8px;flex-wrap:wrap}
+.hm-people-v2 .hm-p-btn{min-height:46px;padding:10px 14px;border:1px solid var(--color-border);border-radius:12px;background:var(--color-surface);font-weight:700;cursor:pointer}
+.hm-people-v2 .hm-p-btn.primary{background:var(--color-primary);color:#fff;border-color:var(--color-primary)}
+.hm-people-v2 .hm-person{border:1px solid var(--color-border);border-radius:16px;padding:14px;margin-top:12px}
+.hm-people-v2 .hm-person-head{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.hm-people-v2 .hm-avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--color-bg);font-weight:800;flex:0 0 42px}
+.hm-people-v2 .hm-person-name{font-size:16px;font-weight:800}
+.hm-people-v2 .hm-person-total{font-size:18px;font-weight:900}
+.hm-people-v2 .hm-entry{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px 0;border-top:1px solid var(--color-border);margin-top:10px}
+.hm-people-v2 .hm-entry small{display:block;color:var(--color-text-muted);margin-top:3px}
+.hm-people-v2 .hm-entry-actions{display:flex;gap:6px;align-items:center}
+.hm-people-v2 .hm-entry-btn{min-width:46px;min-height:44px;padding:8px 10px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-surface);font-weight:700;cursor:pointer}
+.hm-people-v2 .hm-person-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.hm-people-v2 .hm-empty{padding:16px;border:1px dashed var(--color-border);border-radius:12px;color:var(--color-text-muted);margin-top:12px}
+@media(max-width:650px){.hm-people-v2 .hm-entry{grid-template-columns:1fr}.hm-people-v2 .hm-entry-actions{justify-content:flex-start}.hm-people-v2 .hm-p-btn{flex:1}}
 </style>
-<script>
+<script id="hm-people-v2-js">
 (function(){
-  // HeyMoney IOU / People Balance upgrade
-  const oldOpenIou=window.openIouModal;
-  const oldSaveIou=window.saveIou;
-  const oldDeleteIou=window.deleteIou;
-  const oldShowMoneyHub=window.showMoneyHub;
-  const oldAsk=window.askHeyMoney;
-
-  const norm=n=>String(n||'').trim().replace(/\s+/g,' ').toLowerCase();
-  const clean=n=>String(n||'').trim().replace(/\s+/g,' ');
-  const remaining=x=>Math.max(0,(+x.amount||0)-(+x.repaid||0));
-  const esc=s=>typeof escHtml==='function'?escHtml(String(s??'')):String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const money2=n=>typeof fmt==='function'?fmt(n):'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});
-  const initials=n=>clean(n).split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase()||'?';
-  const canonical=n=>{const c=clean(n);if(!c)return '';const found=state.ious.find(x=>norm(x.person)===norm(c));return found?clean(found.person):c};
-  const groups=dir=>{const m=new Map();state.ious.filter(x=>x.direction===dir&&remaining(x)>0).forEach(x=>{const p=canonical(x.person),k=norm(p);if(!m.has(k))m.set(k,{person:p,total:0,items:[]});const g=m.get(k);g.total+=remaining(x);g.items.push({...x,remaining:remaining(x)});});return [...m.values()].sort((a,b)=>b.total-a.total)};
-
-  function ensurePeopleList(){
-    let d=document.getElementById('hm-iou-people');
-    if(!d){d=document.createElement('datalist');d.id='hm-iou-people';document.body.appendChild(d)}
-    const people=[...new Map(state.ious.map(x=>[norm(x.person),canonical(x.person)])).values()].sort((a,b)=>a.localeCompare(b));
-    d.innerHTML=people.map(p=>`<option value="${esc(p)}"></option>`).join('');
-    const i=document.getElementById('iou-person');if(i){i.setAttribute('list','hm-iou-people');i.placeholder='Choose existing person or type a new name';}
-  }
-
-  function personText(g,dir){
-    const lines=[];
-    lines.push(dir==='lent'?`${g.person} owes me ${money2(g.total)}:`:`I owe ${g.person} ${money2(g.total)}:`);
-    g.items.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(x=>lines.push(`• ${x.note||'Money owed'} — ${money2(x.remaining)}${x.dueDate?' (due '+x.dueDate+')':''}`));
-    return lines.join('\n');
-  }
-  function allText(dir){
-    const gs=groups(dir);if(!gs.length)return dir==='lent'?'No one currently owes me money.':'I currently owe no one money.';
-    let total=0;const out=[dir==='lent'?'Money to receive':'Money to pay',''];
-    gs.forEach(g=>{total+=g.total;out.push(personText(g,dir),'')});out.push('Total: '+money2(total));return out.join('\n');
-  }
-  async function copyText(text,msg){try{if(navigator.clipboard)await navigator.clipboard.writeText(text);else{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}toast(msg,'success')}catch(e){toast('Copy failed — please copy manually.','error')}}
-  window.copyIouPerson=(person,dir)=>{const g=groups(dir).find(x=>norm(x.person)===norm(person));if(g)copyText(personText(g,dir),`${g.person}'s details copied.`)};
-  window.copyIouSummary=dir=>copyText(allText(dir),dir==='lent'?'Money to receive copied.':'Money to pay copied.');
-  window.shareIouSummary=dir=>{const text=allText(dir);if(navigator.share)navigator.share({title:dir==='lent'?'Money to receive':'Money to pay',text}).catch(()=>{});else copyText(text,'Copied — paste into WhatsApp.');};
-
-  function renderPeoplePanel(dir){
-    const gs=groups(dir),receive=dir==='lent',total=gs.reduce((s,g)=>s+g.total,0);
-    const cards=gs.map(g=>`<div class="hm-io-group">
-      <div class="hm-io-group-head"><div class="hm-io-avatar">${esc(initials(g.person))}</div>
-        <div class="hm-io-person"><strong>${esc(g.person)}</strong><small>${g.items.length} ${g.items.length===1?'entry':'entries'} · ${receive?'owes you':'you owe'}</small></div>
-        <div class="hm-io-total"><strong class="${receive?'hm-positive':'hm-negative'}">${money2(g.total)}</strong></div>
-      </div>
-      <div class="hm-io-items">${g.items.map(x=>`<div class="hm-io-item"><div class="hm-io-note"><strong>${esc(x.note||'Money owed')}</strong><small>${x.date||''}${x.dueDate?' · due '+x.dueDate:''}${x.repaid?' · '+money2(x.repaid)+' repaid':''}</small></div><strong>${money2(x.remaining)}</strong><button class="hm-action-btn" title="Edit entry" aria-label="Edit entry" onclick="openIouModal('${x.id}')">✎ Edit</button></div>`).join('')}</div>
-      <div class="hm-io-actions"><button class="hm-action-btn" onclick="openIouForPerson('${esc(g.person).replace(/'/g,'&#39;')}','${dir}')">＋ Add ${receive?'money lent':'amount owed'}</button><button class="hm-action-btn" onclick="copyIouPerson('${esc(g.person).replace(/'/g,'&#39;')}','${dir}')">📋 Copy ${esc(g.person)}</button></div>
-    </div>`).join('');
-    return `<div class="hm-panel"><div class="hm-section-head"><div><h3>${receive?'📥 People who owe me':'📤 People I owe'}</h3><div class="form-hint">${gs.length} ${gs.length===1?'person':'people'} · ${money2(total)} total</div></div></div>
-      <div class="hm-io-toolbar"><button class="hm-copy-btn primary" onclick="copyIouSummary('${dir}')">📋 Copy all</button><button class="hm-copy-btn" onclick="shareIouSummary('${dir}')">↗ Share</button><button class="hm-copy-btn" onclick="openIouModal()">＋ Add</button></div>
-      ${cards||'<div class="hm-io-empty">No open balances. Add a person once — future entries with the same name will be combined automatically.</div>'}
-      <div class="hm-copy-note">Every person has one running balance; each expense remains visible underneath.</div></div>`;
-  }
-
-  function refreshPeoplePanels(){
-    const hub=document.getElementById('page-money-hub');if(!hub)return;
-    const grid=hub.querySelector('.hm-hub-grid');if(!grid)return;
-    const old=grid.querySelectorAll('.hm-people-panel');old.forEach(x=>x.remove());
-    const wrap=document.createElement('div');wrap.className='hm-people-panel';wrap.innerHTML=renderPeoplePanel('lent');grid.appendChild(wrap.firstElementChild);
-    const wrap2=document.createElement('div');wrap2.className='hm-people-panel';wrap2.innerHTML=renderPeoplePanel('borrowed');grid.appendChild(wrap2.firstElementChild);
-  }
-
-  window.openIouModal=function(id){oldOpenIou(id);setTimeout(ensurePeopleList,30)};
-  window.saveIou=async function(){const i=document.getElementById('iou-person');if(i)i.value=canonical(i.value);await oldSaveIou();ensurePeopleList();if(document.getElementById('page-money-hub')?.classList.contains('active')){refreshPeoplePanels();if(typeof renderHomeMoney==='function')renderHomeMoney()}};
-  window.deleteIou=async function(id){await oldDeleteIou(id);if(document.getElementById('page-money-hub')?.classList.contains('active'))refreshPeoplePanels()};
-  window.openIouForPerson=function(person,dir){oldOpenIou();setTimeout(()=>{ensurePeopleList();document.getElementById('iou-direction').value=dir;document.getElementById('iou-person').value=canonical(person);document.getElementById('iou-amount').value='';document.getElementById('iou-date').value=today();document.getElementById('iou-due').value='';document.getElementById('iou-note').value='';},30)};
-
-  // Indian-number parser: 1 lakh 20 thousand = 1,20,000
-  function humanAmount(t){let s=String(t||'').toLowerCase().replace(/,/g,' ');const re=/(\d+(?:\.\d+)?)\s*(crore|cr|lakh|lac|lk|thousand|k)?/gi;let m,n=0;while((m=re.exec(s))){let v=parseFloat(m[1]),u=m[2]||'';if(/crore|cr/.test(u))v*=1e7;else if(/lakh|lac|lk/.test(u))v*=1e5;else if(/thousand|k/.test(u))v*=1e3;n+=v}return n};
-  function parseIOU(t){
-    const amount=humanAmount(t),low=t.toLowerCase();if(!amount)return null;
-    let m,p,dir='lent';
-    m=t.match(/^(.*?)\s+(?:paid me|repaid me|sent me|returned)\s+/i);if(m){p=clean(m[1]);return p?{kind:'repayment',person:p,amount}:null}
-    if(!/(owe|owes|lent|loaned|borrowed|gave|paid me|repaid me|sent me)/.test(low))return null;
-    if(/\bi\s+owe\b|\bi\s+borrowed\b|borrowed\s+from|owe\s+them/.test(low))dir='borrowed';
-    m=t.match(/\b(?:lent|loaned|gave)\s+(?:to\s+)?([A-Za-z][A-Za-z .'-]{1,40}?)(?=\s+(?:₹|rs\.?|inr|rupees?|\d)|\s+for\s+|$)/i);if(m)p=clean(m[1]);
-    if(!p){m=t.match(/\b([A-Za-z][A-Za-z .'-]{1,40}?)\s+owes\s+me\b/i);if(m){p=clean(m[1]);dir='lent'}}
-    if(!p){m=t.match(/\bi\s+owe\s+([A-Za-z][A-Za-z .'-]{1,40}?)(?=\s+(?:₹|rs\.?|inr|rupees?|\d)|\s+for\s+|$)/i);if(m){p=clean(m[1]);dir='borrowed'}}
-    if(!p)return null;const note=t.match(/\b(?:for|on)\s+(.+)$/i);return{kind:'iou',direction:dir,person:p,amount,note:note?note[1].replace(/[.!?]+$/,''):''};
-  }
-  async function recordRepayment(person,amount){
-    let left=amount;const arr=state.ious.filter(x=>x.direction==='lent'&&norm(x.person)===norm(person)&&remaining(x)>0).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-    if(!arr.length){toast('No open balance found for '+person+'.','error');return}
-    for(const x of arr){if(left<=0)break;const r=Math.min(left,remaining(x));x.repaid=(+x.repaid||0)+r;left-=r}
-    await persistState();toast(money2(amount)+' repayment recorded.','success');if(document.getElementById('page-money-hub')?.classList.contains('active'))refreshPeoplePanels();if(typeof renderHomeMoney==='function')renderHomeMoney();
-    if(left>0)toast('Only the open balance was applied.','error');
-  }
-  function routeVoice(t){const c=parseIOU(t);if(c?.kind==='repayment'){recordRepayment(c.person,c.amount);return}if(c?.kind==='iou'){openIouModal();setTimeout(()=>{ensurePeopleList();document.getElementById('iou-direction').value=c.direction;document.getElementById('iou-person').value=canonical(c.person);document.getElementById('iou-amount').value=c.amount;document.getElementById('iou-date').value=today();document.getElementById('iou-note').value=c.note||'';toast('Voice understood — review and tap Save.','success')},80);return}openTxnModal();setTimeout(()=>applyVoiceParseToTxnForm(t),80)}
-  window.globalVoiceAdd=function(){runVoiceCapture('voice-status-txn','global-mic-btn',routeVoice)};
-  window.startVoiceCaptureTxn=function(){runVoiceCapture('voice-status-txn','voice-mic-btn-txn',routeVoice)};
-  window.askHeyMoney=function(){const i=document.getElementById('hm-ask-input');if(!i||!i.value.trim())return;const q=i.value.trim(),c=parseIOU(q);if(c?.kind==='repayment'){recordRepayment(c.person,c.amount);i.value='';return}if(c?.kind==='iou'){openIouModal();setTimeout(()=>{ensurePeopleList();document.getElementById('iou-direction').value=c.direction;document.getElementById('iou-person').value=canonical(c.person);document.getElementById('iou-amount').value=c.amount;document.getElementById('iou-date').value=today();document.getElementById('iou-note').value=c.note||''},80);i.value='';return}if(oldAsk)oldAsk()};
-
-  window.showMoneyHub=function(){
-    if(oldShowMoneyHub)oldShowMoneyHub();
-    setTimeout(()=>{refreshPeoplePanels();ensurePeopleList()},80);
-  };
-  // Also refresh if the existing hub is already visible.
-  setTimeout(()=>{if(document.getElementById('page-money-hub')?.classList.contains('active'))refreshPeoplePanels()},200);
+'use strict';
+const oldShowMoneyHub=window.showMoneyHub;
+const oldSaveIou=window.saveIou;
+const oldDeleteIou=window.deleteIou;
+const oldCopyIouReminder=window.copyIouReminder;
+const esc2=s=>typeof escHtml==='function'?escHtml(String(s??'')):String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clean=s=>String(s??'').trim().replace(/\s+/g,' ');
+const key=s=>clean(s).toLowerCase();
+const rem=x=>Math.max(0,(Number(x.amount)||0)-(Number(x.repaid)||0));
+const fmt2=n=>typeof fmt==='function'?fmt(n):'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});
+const people=dir=>{const m=new Map();(state.ious||[]).filter(x=>x.direction===dir&&rem(x)>0).forEach(x=>{const p=clean(x.person),k=key(p);if(!m.has(k))m.set(k,{person:p,total:0,items:[]});const g=m.get(k);g.total+=rem(x);g.items.push(x)});return [...m.values()].sort((a,b)=>b.total-a.total)};
+function allText(dir){const gs=people(dir);const title=dir==='lent'?'💰 MONEY TO RECEIVE':'💸 MONEY TO PAY';if(!gs.length)return title+'\nNo open balances.';let out=title+'\n\n';gs.forEach(g=>{out+=(dir==='lent'?g.person+' owes me ':'I owe '+g.person+' ')+fmt2(g.total)+'\n';g.items.forEach(x=>out+='  • '+(x.note||'Money owed')+' — '+fmt2(rem(x))+(x.dueDate?' — due '+x.dueDate:'')+'\n');out+='\n'});out+='Total: '+fmt2(gs.reduce((s,g)=>s+g.total,0));return out}
+function personText(g,dir){let out=(dir==='lent'?g.person+' owes me ':'I owe '+g.person+' ')+fmt2(g.total)+'\n\n';g.items.forEach(x=>out+='• '+(x.note||'Money owed')+' — '+fmt2(rem(x))+(x.dueDate?' — due '+x.dueDate:'')+'\n');return out.trim()}
+async function copyText(text,msg){try{await navigator.clipboard.writeText(text);toast(msg||'Copied.','success')}catch(e){const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast(msg||'Copied.','success')}}
+window.hmCopyPeople=async function(dir){await copyText(allText(dir),'Full breakdown copied.')} ;
+window.hmCopyPerson=async function(person,dir){person=decodeURIComponent(person);const g=people(dir).find(x=>key(x.person)===key(person));if(g)await copyText(personText(g,dir),g.person+' breakdown copied.')} ;
+window.hmSharePeople=async function(dir){const text=allText(dir);if(navigator.share){try{await navigator.share({title:'HeyMoney',text})}catch(e){}}else await copyText(text,'Share text copied.')} ;
+window.hmAddForPerson=function(person,dir){person=decodeURIComponent(person);openIouModal();setTimeout(()=>{const d=document.getElementById('iou-direction'),p=document.getElementById('iou-person');if(d)d.value=dir;if(p){p.value=person;p.focus()}},50)};
+function renderPeople(dir){const gs=people(dir),total=gs.reduce((s,g)=>s+g.total,0),receive=dir==='lent';let html='<div class="hm-panel hm-people-v2"><div class="hm-p-head"><div><h3>'+(receive?'📥 People who owe me':'📤 People I owe')+'</h3><div class="form-hint">'+gs.length+' '+(gs.length===1?'person':'people')+' · '+fmt2(total)+' total</div></div><div class="hm-p-actions"><button class="hm-p-btn" onclick="hmCopyPeople(\''+dir+'\')">📋 Copy all</button><button class="hm-p-btn" onclick="hmSharePeople(\''+dir+'\')">↗ Share</button><button class="hm-p-btn primary" onclick="openIouModal()">＋ Add</button></div></div>';
+if(!gs.length)html+='<div class="hm-empty">No open balances yet.</div>'; else gs.forEach(g=>{html+='<div class="hm-person"><div class="hm-person-head"><div style="display:flex;align-items:center;gap:10px"><div class="hm-avatar">'+esc2(g.person.split(/\s+/).map(x=>x[0]||'').slice(0,2).join('').toUpperCase())+'</div><div><div class="hm-person-name">'+esc2(g.person)+'</div><div class="form-hint">'+(receive?'owes you':'you owe')+'</div></div></div><div class="hm-person-total">'+fmt2(g.total)+'</div></div>';
+g.items.forEach(x=>{html+='<div class="hm-entry"><div><strong>'+esc2(x.note||'Money owed')+'</strong><small>'+esc2(x.date||'')+(x.dueDate?' · due '+esc2(x.dueDate):'')+(x.repaid?' · '+fmt2(x.repaid)+' repaid':'')+'</small></div><div class="hm-entry-actions"><strong>'+fmt2(rem(x))+'</strong><button class="hm-entry-btn" onclick="openIouModal(\''+x.id+'\')">✎ Edit</button></div></div>'});
+html+='<div class="hm-person-actions"><button class="hm-entry-btn" onclick="hmAddForPerson(\''+encodeURIComponent(g.person)+'\',\''+dir+'\')">＋ Add '+(receive?'money lent':'amount owed')+'</button><button class="hm-entry-btn" onclick="hmCopyPerson(\''+encodeURIComponent(g.person)+'\',\''+dir+'\')">📋 Copy '+esc2(g.person)+'</button></div></div>'});
+return html+'</div>'}
+function refresh(){const page=document.getElementById('page-money-hub');if(!page)return;const grid=page.querySelector('.hm-hub-grid');if(!grid)return;grid.querySelectorAll('.hm-people-v2').forEach(x=>x.remove());grid.insertAdjacentHTML('beforeend',renderPeople('lent')+renderPeople('borrowed'))}
+function wrapHub(){const original=oldShowMoneyHub||function(){showPage('money-hub');renderMoneyHub()};window.showMoneyHub=function(){original();setTimeout(refresh,0)}};wrapHub();
+window.saveIou=async function(){const p=document.getElementById('iou-person');if(p)p.value=clean(p.value);await oldSaveIou();setTimeout(refresh,0)};
+window.deleteIou=async function(id){if(!confirm('Delete this IOU?'))return;state.ious=state.ious.filter(x=>x.id!==id);await persistState();renderMoneyHub();renderHomeMoney();refresh()};
+function amountWords(t){let s=String(t).toLowerCase().replace(/,/g,' '),total=0,found=false;const crore=s.match(/(\d+(?:\.\d+)?)\s*(crore|cr)\b/);if(crore){total+=parseFloat(crore[1])*10000000;found=true}s=s.replace(/\d+(?:\.\d+)?\s*(?:crore|cr)\b/g,' ');const lakh=s.match(/(\d+(?:\.\d+)?)\s*(lakh|lac|lakhs|lacs|lk)\b/);if(lakh){total+=parseFloat(lakh[1])*100000;found=true}s=s.replace(/\d+(?:\.\d+)?\s*(?:lakh|lac|lakhs|lacs|lk)\b/g,' ');const thou=s.match(/(\d+(?:\.\d+)?)\s*(thousand|k)\b/);if(thou){total+=parseFloat(thou[1])*1000;found=true}s=s.replace(/\d+(?:\.\d+)?\s*(?:thousand|k)\b/g,' ');const n=s.match(/(?:₹|rs\.?|inr|rupees?)\s*(\d+(?:\.\d+)?)/i)||s.match(/\b(\d+(?:\.\d+)?)\b/);if(n){total+=parseFloat(n[1]);found=true}return found?total:null}
+function parseIOUVoice(t){const a=amountWords(t);if(!a)return null;const s=clean(t);let m=s.match(/^(.+?)\s+(?:paid|repaid|sent)\s+(?:me\s+)?(?:₹|rs\.?|inr|rupees?\s*)?/i);if(m)return{kind:'repay',person:clean(m[1]),amount:a};m=s.match(/^(?:i\s+)?(?:lent|loaned|gave)\s+(.+?)\s+(?:₹|rs\.?|inr|rupees?\s*)?\d/i);if(m)return{kind:'iou',direction:'lent',person:clean(m[1]),amount:a,note:s};m=s.match(/^(.+?)\s+owes\s+me/i);if(m)return{kind:'iou',direction:'lent',person:clean(m[1]),amount:a,note:s};m=s.match(/^i\s+(?:owe|borrowed\s+from)\s+(.+?)(?:\s+(?:₹|rs\.?|inr|rupees?)?\d|\s+for\s+)/i);if(m)return{kind:'iou',direction:'borrowed',person:clean(m[1]),amount:a,note:s};return null}
+async function repayPerson(person,amount){let left=amount;const xs=state.ious.filter(x=>x.direction==='lent'&&key(x.person)===key(person)&&rem(x)>0).sort((a,b)=>(a.date||'').localeCompare(b.date||''));for(const x of xs){if(left<=0)break;const r=Math.min(rem(x),left);x.repaid=(Number(x.repaid)||0)+r;left-=r}await persistState();renderHomeMoney();if(document.getElementById('page-money-hub')?.classList.contains('active')){renderMoneyHub();refresh()}return left}
+window.hmRouteVoice=function(text){const c=parseIOUVoice(text);if(c){if(c.kind==='repay'){repayPerson(c.person,c.amount);toast('Repayment recorded for '+c.person+'.','success');return true}openIouModal();setTimeout(()=>{document.getElementById('iou-direction').value=c.direction;document.getElementById('iou-person').value=c.person;document.getElementById('iou-amount').value=c.amount;document.getElementById('iou-note').value=c.note||'';toast('IOU details filled — tap Save.','success')},50);return true}return false};
+const oldStart=window.startVoiceCaptureTxn;if(oldStart)window.startVoiceCaptureTxn=function(){runVoiceCapture('voice-status-txn','voice-mic-btn-txn',t=>{if(!window.hmRouteVoice(t))applyVoiceParseToTxnForm(t)})};
+const oldAsk=window.askHeyMoney;if(oldAsk)window.askHeyMoney=function(){const i=document.getElementById('hm-ask-input');if(i&&window.hmRouteVoice(i.value.trim())){i.value='';return}oldAsk()};
+setTimeout(()=>{if(document.getElementById('page-money-hub')?.classList.contains('active'))refresh()},100);
 })();
 </script>
 </body>
