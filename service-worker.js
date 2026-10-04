@@ -1,4 +1,4 @@
-const CACHE_NAME = 'heymoney-cache-v4';
+const CACHE_NAME = 'heymoney-cache-v5';
 
 const APP_SHELL = [
   './',
